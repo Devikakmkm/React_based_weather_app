@@ -1,0 +1,165 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { 
+  Thermometer, 
+  Droplets, 
+  Wind, 
+  Eye, 
+  Gauge,
+  Sun,
+  CloudRain,
+  Navigation,
+  Zap,
+  Activity,
+  TrendingUp,
+  TrendingDown
+} from "lucide-react";
+
+export default function DetailedMetrics({ weather, unit = "celsius" }) {
+  const getTemperature = (temp) => {
+    if (unit === "fahrenheit") {
+      return `${Math.round((temp * 9/5) + 32)}°F`;
+    }
+    return `${Math.round(temp)}°C`;
+  };
+
+  const getWindDirection = (degrees) => {
+    const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    return directions[Math.round(degrees / 22.5) % 16];
+  };
+
+  const getUVIndex = (clouds) => {
+    // Simulate UV index based on cloudiness (in real app you'd get this from API)
+    const baseUV = 7;
+    const uvIndex = Math.max(0, baseUV - (clouds / 100) * 5);
+    return Math.round(uvIndex);
+  };
+
+  const getUVLevel = (uv) => {
+    if (uv <= 2) return { level: "Low", color: "text-green-400" };
+    if (uv <= 5) return { level: "Moderate", color: "text-yellow-400" };
+    if (uv <= 7) return { level: "High", color: "text-orange-400" };
+    if (uv <= 10) return { level: "Very High", color: "text-red-400" };
+    return { level: "Extreme", color: "text-purple-400" };
+  };
+
+  const getPressureTrend = (pressure) => {
+    // Simulate pressure trend (in real app you'd compare with historical data)
+    const normalPressure = 1013.25;
+    if (pressure > normalPressure + 5) return { trend: "Rising", icon: TrendingUp, color: "text-green-400" };
+    if (pressure < normalPressure - 5) return { trend: "Falling", icon: TrendingDown, color: "text-red-400" };
+    return { trend: "Stable", icon: Activity, color: "text-blue-400" };
+  };
+
+  const uvIndex = getUVIndex(weather.clouds.all);
+  const uvLevel = getUVLevel(uvIndex);
+  const pressureTrend = getPressureTrend(weather.main.pressure);
+  const PressureTrendIcon = pressureTrend.icon;
+
+  const metrics = [
+    {
+      title: "Real Feel",
+      value: getTemperature(weather.main.feels_like),
+      subtitle: `${Math.abs(Math.round(weather.main.feels_like - weather.main.temp))}° ${weather.main.feels_like > weather.main.temp ? 'warmer' : 'cooler'}`,
+      icon: Thermometer,
+      color: "text-red-400",
+      bgColor: "bg-red-500/10"
+    },
+    {
+      title: "Humidity",
+      value: `${weather.main.humidity}%`,
+      subtitle: weather.main.humidity > 60 ? "High humidity" : weather.main.humidity < 30 ? "Low humidity" : "Comfortable",
+      icon: Droplets,
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10"
+    },
+    {
+      title: "Wind Speed",
+      value: `${Math.round(weather.wind.speed * 3.6)} km/h`,
+      subtitle: `${getWindDirection(weather.wind.deg)} direction`,
+      icon: Wind,
+      color: "text-green-400",
+      bgColor: "bg-green-500/10"
+    },
+    {
+      title: "Visibility",
+      value: weather.visibility ? `${(weather.visibility / 1000).toFixed(1)} km` : 'N/A',
+      subtitle: weather.visibility > 10000 ? "Excellent" : weather.visibility > 5000 ? "Good" : "Poor",
+      icon: Eye,
+      color: "text-purple-400",
+      bgColor: "bg-purple-500/10"
+    },
+    {
+      title: "Air Pressure",
+      value: `${weather.main.pressure} hPa`,
+      subtitle: `${pressureTrend.trend}`,
+      icon: Gauge,
+      color: pressureTrend.color.replace('text-', 'text-'),
+      bgColor: `${pressureTrend.color.replace('text-', 'bg-').replace('-400', '-500')}/10`
+    },
+    {
+      title: "UV Index",
+      value: uvIndex.toString(),
+      subtitle: uvLevel.level,
+      icon: Sun,
+      color: uvLevel.color,
+      bgColor: `${uvLevel.color.replace('text-', 'bg-').replace('-400', '-500')}/10`
+    },
+    {
+      title: "Cloud Cover",
+      value: `${weather.clouds.all}%`,
+      subtitle: weather.clouds.all < 25 ? "Clear skies" : weather.clouds.all < 75 ? "Partly cloudy" : "Overcast",
+      icon: CloudRain,
+      color: "text-gray-400",
+      bgColor: "bg-gray-500/10"
+    },
+    {
+      title: "Wind Gust",
+      value: weather.wind.gust ? `${Math.round(weather.wind.gust * 3.6)} km/h` : 'N/A',
+      subtitle: weather.wind.gust ? "Peak wind speed" : "No gusts",
+      icon: Navigation,
+      color: "text-cyan-400",
+      bgColor: "bg-cyan-500/10"
+    }
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
+      className="mt-8"
+    >
+      <h3 className="text-2xl font-bold text-white mb-6">Detailed Conditions</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metrics.map((metric, index) => (
+          <motion.div
+            key={metric.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.05 }}
+            className={`${metric.bgColor} backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 group hover:scale-105`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-2 rounded-xl ${metric.bgColor} border border-white/10`}>
+                <metric.icon className={`w-5 h-5 ${metric.color}`} />
+              </div>
+              {metric.title === "Air Pressure" && (
+                <PressureTrendIcon className={`w-4 h-4 ${pressureTrend.color}`} />
+              )}
+            </div>
+            
+            <div className="space-y-1">
+              <p className="text-white/60 text-sm font-medium">{metric.title}</p>
+              <p className="text-white text-2xl font-bold">{metric.value}</p>
+              <p className={`text-sm ${metric.color} font-medium`}>
+                {metric.subtitle}
+              </p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

@@ -1,0 +1,274 @@
+import React, { useState, useEffect } from "react";
+import { WeatherSettings } from "@/entities/WeatherSettings";
+import { User } from "@/entities/User";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { 
+  Settings as SettingsIcon, 
+  Key, 
+  MapPin, 
+  Thermometer, 
+  Save,
+  ArrowLeft,
+  ExternalLink,
+  CheckCircle
+} from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function Settings() {
+  const [settings, setSettings] = useState({
+    api_key: "",
+    default_city: "London",
+    temperature_unit: "celsius"
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const user = await User.me();
+      const userSettings = await WeatherSettings.filter({ created_by: user.email });
+      if (userSettings.length > 0) {
+        setSettings({
+          api_key: userSettings[0].api_key || "",
+          default_city: userSettings[0].default_city || "London",
+          temperature_unit: userSettings[0].temperature_unit || "celsius"
+        });
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!settings.api_key.trim()) {
+      setError("API key is required");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const user = await User.me();
+      const existingSettings = await WeatherSettings.filter({ created_by: user.email });
+      
+      if (existingSettings.length > 0) {
+        await WeatherSettings.update(existingSettings[0].id, settings);
+      } else {
+        await WeatherSettings.create(settings);
+      }
+
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (error) {
+      setError("Failed to save settings. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-4 mb-6">
+          <Link 
+            to={createPageUrl("Dashboard")}
+            className="p-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </Link>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+              Settings
+            </h1>
+            <p className="text-white/60 mt-1">
+              Configure your weather app preferences
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="space-y-6">
+        {/* API Key Setup */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <Card className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 rounded-lg bg-cyan-500/20">
+                  <Key className="w-5 h-5 text-cyan-400" />
+                </div>
+                OpenWeatherMap API Key
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-blue-500/10 backdrop-blur-sm rounded-2xl p-4 border border-blue-500/20">
+                <p className="text-blue-200 text-sm mb-3">
+                  You need a free API key from OpenWeatherMap to use this app.
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-200 text-sm">Get your free API key:</span>
+                  <a
+                    href="https://openweathermap.org/api"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:text-cyan-300 transition-colors inline-flex items-center gap-1 text-sm font-medium"
+                  >
+                    openweathermap.org/api
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="api_key" className="text-white/80">
+                  API Key
+                </Label>
+                <Input
+                  id="api_key"
+                  type="password"
+                  placeholder="Enter your OpenWeatherMap API key"
+                  value={settings.api_key}
+                  onChange={(e) => setSettings({ ...settings, api_key: e.target.value })}
+                  className="bg-white/5 backdrop-blur-sm border border-white/20 text-white placeholder-white/50 rounded-xl focus:bg-white/10 focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Location Settings */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Card className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 rounded-lg bg-green-500/20">
+                  <MapPin className="w-5 h-5 text-green-400" />
+                </div>
+                Default Location
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="default_city" className="text-white/80">
+                  Default City
+                </Label>
+                <Input
+                  id="default_city"
+                  type="text"
+                  placeholder="e.g., London, New York, Tokyo"
+                  value={settings.default_city}
+                  onChange={(e) => setSettings({ ...settings, default_city: e.target.value })}
+                  className="bg-white/5 backdrop-blur-sm border border-white/20 text-white placeholder-white/50 rounded-xl focus:bg-white/10 focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Temperature Unit */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Card className="bg-white/10 backdrop-blur-md border border-white/20 shadow-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 rounded-lg bg-orange-500/20">
+                  <Thermometer className="w-5 h-5 text-orange-400" />
+                </div>
+                Temperature Unit
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={settings.temperature_unit}
+                onValueChange={(value) => setSettings({ ...settings, temperature_unit: value })}
+              >
+                <SelectTrigger className="bg-white/5 backdrop-blur-sm border border-white/20 text-white rounded-xl focus:bg-white/10 focus:ring-2 focus:ring-cyan-400 focus:border-transparent">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-900 border-gray-700">
+                  <SelectItem value="celsius">Celsius (°C)</SelectItem>
+                  <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Error Alert */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert className="bg-red-500/10 border-red-500/20 backdrop-blur-md">
+              <AlertDescription className="text-red-200">{error}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        {/* Save Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="flex justify-end"
+        >
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
+            className={`px-8 py-3 rounded-2xl font-medium transition-all duration-300 ${
+              isSaved
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
+            } border-0 shadow-lg`}
+          >
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                Saving...
+              </>
+            ) : isSaved ? (
+              <>
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Saved!
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5 mr-2" />
+                Save Settings
+              </>
+            )}
+          </Button>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

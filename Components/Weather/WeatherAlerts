@@ -1,0 +1,154 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { 
+  AlertTriangle, 
+  Thermometer, 
+  Wind, 
+  CloudRain, 
+  Sun,
+  Snowflake,
+  Zap
+} from "lucide-react";
+
+export default function WeatherAlerts({ weather }) {
+  const generateAlerts = () => {
+    const alerts = [];
+    
+    // Temperature alerts
+    if (weather.main.temp > 35) {
+      alerts.push({
+        type: "heat",
+        title: "Extreme Heat Warning",
+        message: "Temperature exceeds 35°C. Stay hydrated and avoid prolonged sun exposure.",
+        icon: Sun,
+        color: "text-red-400",
+        bgColor: "bg-red-500/10",
+        borderColor: "border-red-500/20"
+      });
+    } else if (weather.main.temp < -10) {
+      alerts.push({
+        type: "cold",
+        title: "Extreme Cold Warning", 
+        message: "Temperature below -10°C. Dress warmly and limit outdoor exposure.",
+        icon: Snowflake,
+        color: "text-blue-400",
+        bgColor: "bg-blue-500/10",
+        borderColor: "border-blue-500/20"
+      });
+    }
+
+    // Wind alerts
+    if (weather.wind.speed > 10) {
+      alerts.push({
+        type: "wind",
+        title: "High Wind Advisory",
+        message: `Strong winds at ${Math.round(weather.wind.speed * 3.6)} km/h. Secure loose objects.`,
+        icon: Wind,
+        color: "text-green-400",
+        bgColor: "bg-green-500/10",
+        borderColor: "border-green-500/20"
+      });
+    }
+
+    // Visibility alerts
+    if (weather.visibility && weather.visibility < 1000) {
+      alerts.push({
+        type: "visibility",
+        title: "Low Visibility Warning",
+        message: "Visibility reduced to less than 1km. Drive carefully.",
+        icon: AlertTriangle,
+        color: "text-yellow-400",
+        bgColor: "bg-yellow-500/10",
+        borderColor: "border-yellow-500/20"
+      });
+    }
+
+    // Weather condition alerts
+    if (weather.weather[0].main === "Thunderstorm") {
+      alerts.push({
+        type: "storm",
+        title: "Thunderstorm Alert",
+        message: "Thunderstorm conditions detected. Seek shelter indoors.",
+        icon: Zap,
+        color: "text-purple-400",
+        bgColor: "bg-purple-500/10",
+        borderColor: "border-purple-500/20"
+      });
+    }
+
+    // UV alerts (simulated)
+    const clouds = weather.clouds.all;
+    const uvIndex = Math.max(0, 7 - (clouds / 100) * 5);
+    if (uvIndex > 7) {
+      alerts.push({
+        type: "uv",
+        title: "High UV Index",
+        message: "UV index is high. Use sunscreen and wear protective clothing.",
+        icon: Sun,
+        color: "text-orange-400",
+        bgColor: "bg-orange-500/10",
+        borderColor: "border-orange-500/20"
+      });
+    }
+
+    return alerts;
+  };
+
+  const alerts = generateAlerts();
+
+  if (alerts.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="mt-8"
+      >
+        <div className="bg-green-500/10 backdrop-blur-sm rounded-2xl border border-green-500/20 p-6 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 bg-green-500/20 rounded-full flex items-center justify-center">
+            <Sun className="w-6 h-6 text-green-400" />
+          </div>
+          <h3 className="text-white font-semibold mb-2">All Clear!</h3>
+          <p className="text-green-200 text-sm">No weather alerts for your location</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.5 }}
+      className="mt-8"
+    >
+      <h3 className="text-2xl font-bold text-white mb-6">Weather Alerts</h3>
+      
+      <div className="space-y-4">
+        {alerts.map((alert, index) => (
+          <motion.div
+            key={alert.type}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: index * 0.1 }}
+            className={`${alert.bgColor} backdrop-blur-sm rounded-2xl border ${alert.borderColor} p-6 hover:scale-105 transition-all duration-300`}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-xl ${alert.bgColor} border ${alert.borderColor} flex-shrink-0`}>
+                <alert.icon className={`w-6 h-6 ${alert.color}`} />
+              </div>
+              <div>
+                <h4 className={`font-bold text-lg mb-2 ${alert.color}`}>
+                  {alert.title}
+                </h4>
+                <p className="text-white/80 leading-relaxed">
+                  {alert.message}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}

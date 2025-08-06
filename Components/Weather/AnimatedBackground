@@ -1,0 +1,97 @@
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+export default function AnimatedBackground({ weatherCondition = "Clear" }) {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    const generateParticles = () => {
+      const newParticles = [];
+      const particleCount = getParticleCount(weatherCondition);
+      
+      for (let i = 0; i < particleCount; i++) {
+        newParticles.push({
+          id: i,
+          x: Math.random() * 100,
+          y: Math.random() * 100,
+          size: Math.random() * 4 + 1,
+          opacity: Math.random() * 0.7 + 0.3,
+          duration: Math.random() * 3 + 2,
+          delay: Math.random() * 2
+        });
+      }
+      setParticles(newParticles);
+    };
+
+    generateParticles();
+  }, [weatherCondition]);
+
+  const getParticleCount = (condition) => {
+    const counts = {
+      'Rain': 100,
+      'Drizzle': 60,
+      'Snow': 80,
+      'Thunderstorm': 40,
+      'Clouds': 30,
+      'Clear': 20,
+      'Mist': 50,
+      'Fog': 50
+    };
+    return counts[condition] || 20;
+  };
+
+  const getParticleStyle = (condition) => {
+    const styles = {
+      'Rain': { backgroundColor: '#60A5FA', width: '2px', height: '12px', borderRadius: '2px' },
+      'Drizzle': { backgroundColor: '#93C5FD', width: '1px', height: '8px', borderRadius: '1px' },
+      'Snow': { backgroundColor: '#F8FAFC', width: '6px', height: '6px', borderRadius: '50%' },
+      'Thunderstorm': { backgroundColor: '#A855F7', width: '3px', height: '15px', borderRadius: '2px' },
+      'Clouds': { backgroundColor: '#E2E8F0', width: '8px', height: '8px', borderRadius: '50%' },
+      'Clear': { backgroundColor: '#FCD34D', width: '4px', height: '4px', borderRadius: '50%' },
+      'Mist': { backgroundColor: '#CBD5E1', width: '6px', height: '6px', borderRadius: '50%' },
+      'Fog': { backgroundColor: '#94A3B8', width: '8px', height: '8px', borderRadius: '50%' }
+    };
+    return styles[condition] || styles['Clear'];
+  };
+
+  const getAnimationProps = (condition) => {
+    const animations = {
+      'Rain': { y: ['0vh', '100vh'], rotate: [0, 5] },
+      'Drizzle': { y: ['0vh', '100vh'], x: [0, 10] },
+      'Snow': { y: ['0vh', '100vh'], x: [0, 20], rotate: [0, 360] },
+      'Thunderstorm': { y: ['0vh', '100vh'], x: [0, -10] },
+      'Clouds': { x: ['0vw', '100vw'], y: [0, 10] },
+      'Clear': { scale: [1, 1.2, 1], opacity: [0.3, 1, 0.3] },
+      'Mist': { x: ['0vw', '100vw'], opacity: [0.3, 0.7, 0.3] },
+      'Fog': { x: ['0vw', '100vw'], opacity: [0.2, 0.6, 0.2] }
+    };
+    return animations[condition] || animations['Clear'];
+  };
+
+  const particleStyle = getParticleStyle(weatherCondition);
+  const animationProps = getAnimationProps(weatherCondition);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            ...particleStyle,
+            opacity: particle.opacity
+          }}
+          animate={animationProps}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
+            delay: particle.delay,
+            ease: "linear"
+          }}
+        />
+      ))}
+    </div>
+  );
+}

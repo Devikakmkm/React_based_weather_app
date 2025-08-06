@@ -1,0 +1,27 @@
+{
+  "name": "WeatherSettings",
+  "type": "object",
+  "properties": {
+    "api_key": {
+      "type": "string",
+      "description": "OpenWeatherMap API key"
+    },
+    "default_city": {
+      "type": "string",
+      "description": "User's preferred default city",
+      "default": "New York"
+    },
+    "temperature_unit": {
+      "type": "string",
+      "enum": [
+        "celsius",
+        "fahrenheit"
+      ],
+      "default": "celsius",
+      "description": "Preferred temperature unit"
+    }
+  },
+  "required": [
+    "api_key"
+  ]
+}
